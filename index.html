@@ -1,0 +1,542 @@
+
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"UTF-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
+  <title>Picture-Word Task</title>
+  <style>
+    :root{
+      --bg:#f4f6fb;--card:#ffffff;--text:#18212f;--muted:#4b5563;--border:#dbe3ee;
+      --dark:#0f172a;--dark2:#334155;--correct:#15803d;--incorrect:#b91c1c;--panel:#f8fbff;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+    .screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:24px}
+    .screen.active{display:flex}
+    .card{width:100%;max-width:1000px;background:var(--card);border-radius:20px;padding:32px;
+      box-shadow:0 16px 42px rgba(15,23,42,.10);border:1px solid rgba(219,227,238,.8)}
+    h1,h2,h3{margin-top:0;color:#0f172a} h1{font-size:38px;margin-bottom:12px} h2{font-size:30px}
+    h3{font-size:22px;margin-bottom:8px}
+    p,li{font-size:18px;line-height:1.6;margin-top:0}
+    .small{font-size:15px;color:var(--muted)}
+    .intro-grid{display:grid;grid-template-columns:1.15fr 1fr;gap:24px;align-items:start;margin-top:18px}
+    .example-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .panel,.example-card{border:1px solid var(--border);border-radius:18px;padding:18px 20px;background:var(--panel)}
+    .mini-cue{display:inline-flex;min-width:56px;height:56px;align-items:center;justify-content:center;border-radius:14px;background:#e4edff;color:#1d4ed8;font-size:30px;font-weight:700;margin-bottom:10px}
+    .mini-stage{position:relative;height:180px;border:2px solid #d7dfeb;border-radius:16px;background:#fff;display:flex;align-items:center;justify-content:center;margin:12px 0}
+    .mini-picture{font-size:92px;line-height:1}
+    .mini-word{position:absolute;font-size:34px;font-weight:700;letter-spacing:1px;background:rgba(255,255,255,.88);padding:6px 12px;border-radius:10px}
+    .mini-test{display:inline-flex;align-items:center;justify-content:center;min-width:82px;min-height:82px;font-size:56px;border-radius:14px;background:#eef2ff;padding:8px 14px;margin:8px 0 10px 0}
+    .row{display:flex;gap:18px;flex-wrap:wrap;margin:18px 0}
+    label{display:block;font-size:16px;font-weight:700;margin-bottom:8px}
+    input[type=\"text\"],select{width:100%;max-width:360px;padding:13px 14px;border-radius:12px;border:1px solid #cbd5e1;font-size:16px;background:#fff}
+    button{border:none;border-radius:12px;padding:15px 22px;font-size:18px;cursor:pointer;background:var(--dark);color:white}
+    button.secondary{background:var(--dark2)}
+    .task-card{max-width:1060px;text-align:center;min-height:720px;display:flex;flex-direction:column;justify-content:center}
+    #trialCounter{font-size:23px;font-weight:700;margin-bottom:8px}
+    #statusText{font-size:20px;color:var(--muted);min-height:28px;margin-bottom:16px}
+    #warningCue{font-size:92px;font-weight:700;min-height:110px;color:#1d4ed8;margin-bottom:8px}
+    #cueExplanation{font-size:34px;min-height:44px;margin-bottom:18px}
+    #fixation{font-size:72px;min-height:84px;margin-bottom:10px}
+    #contextStage{position:relative;width:560px;height:320px;margin:0 auto 22px auto;display:flex;align-items:center;justify-content:center;border:2px solid #dbe3ee;border-radius:22px;background:#fff}
+    #pictureStimulus{font-size:164px;line-height:1;user-select:none}
+    #wordStimulus{position:absolute;font-size:52px;font-weight:700;letter-spacing:1px;background:rgba(255,255,255,.90);padding:10px 18px;border-radius:14px;user-select:none}
+    #testStage{min-height:132px;display:flex;align-items:center;justify-content:center;margin-bottom:18px}
+    .test-picture{font-size:118px;line-height:1}
+    .test-word{font-size:68px;font-weight:700;letter-spacing:1px;padding:10px 22px;border-radius:16px;background:#eef2ff}
+    .responseButtons{display:flex;gap:22px;justify-content:center;flex-wrap:wrap;margin-bottom:10px}
+    .responseButtons button{min-width:220px;font-size:24px;padding:18px 22px}
+    #feedbackText{min-height:38px;font-size:28px;font-weight:700;margin-top:8px}
+    .correct{color:var(--correct)} .incorrect{color:var(--incorrect)} .hidden{visibility:hidden}
+    .center-note{font-size:18px;color:var(--muted);margin-top:14px}
+    .end-card{max-width:860px;text-align:center}
+    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:20px 0 24px 0}
+    .summary-box{border:1px solid var(--border);border-radius:16px;padding:16px;background:var(--panel)}
+    .summary-box .label{font-size:15px;color:var(--muted);margin-bottom:6px}
+    .summary-box .value{font-size:30px;font-weight:700;color:#0f172a}
+    .chart-wrap{border:1px solid var(--border);border-radius:18px;padding:18px;background:#fff;margin-top:10px}
+    #saveStatus{font-size:15px;color:var(--muted);margin-top:14px;min-height:20px}
+    @media (max-width: 900px){
+      .intro-grid{grid-template-columns:1fr}
+      .example-wrap{grid-template-columns:1fr}
+      #contextStage{width:94%;height:280px}
+      #pictureStimulus{font-size:128px}
+      #wordStimulus{font-size:42px}
+      #warningCue{font-size:80px}
+      #cueExplanation{font-size:28px}
+      .summary-grid{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div id=\"welcomeScreen\" class=\"screen active\">
+    <div class=\"card\">
+      <h1>Picture-Word Task</h1>
+      <p>In this task, you will see a picture with a word placed on top of it. At the start of each trial, a cue will tell you whether to focus on the <strong>picture</strong> or the <strong>word</strong>.</p>
+      <p>After that, you will see one test item. Your job is to decide whether that test item is <strong>related</strong> or <strong>unrelated</strong> to the part you were told to focus on.</p>
+
+      <div class=\"intro-grid\">
+        <div class=\"panel\">
+          <h3>How to respond</h3>
+          <ul>
+            <li>Press <strong>F</strong> for <strong>Related</strong></li>
+            <li>Press <strong>J</strong> for <strong>Unrelated</strong></li>
+            <li>You can also click the response buttons on the screen</li>
+          </ul>
+          <p>Please work as quickly and accurately as you can.</p>
+          <h3>Before you begin</h3>
+          <ul>
+            <li>You will complete a short practice first</li>
+            <li>The main task has 15 trials</li>
+            <li>Please keep your eyes near the center of the screen</li>
+          </ul>
+        </div>
+
+        <div class=\"example-wrap\">
+          <div class=\"example-card\">
+            <div class=\"mini-cue\">P</div>
+            <p><strong>Focus on the picture</strong></p>
+            <div class=\"mini-stage\">
+              <div class=\"mini-picture\">☂️</div>
+              <div class=\"mini-word\">DOG</div>
+            </div>
+            <div class=\"mini-test\">🌧️</div>
+            <p class=\"small\">This answer would be <strong>Related</strong>, because rain is related to umbrella.</p>
+          </div>
+
+          <div class=\"example-card\">
+            <div class=\"mini-cue\">W</div>
+            <p><strong>Focus on the word</strong></p>
+            <div class=\"mini-stage\">
+              <div class=\"mini-picture\">🐶</div>
+              <div class=\"mini-word\">LOCK</div>
+            </div>
+            <div class=\"mini-test\">🔑</div>
+            <p class=\"small\">This answer would be <strong>Related</strong>, because key is related to lock.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class=\"row\">
+        <div>
+          <label for=\"participantId\">Participant ID</label>
+          <input id=\"participantId\" type=\"text\" placeholder=\"Leave blank to auto-generate\" />
+        </div>
+        <div>
+          <label for=\"adhdStatus\">Self-reported ADHD status</label>
+          <select id=\"adhdStatus\">
+            <option value=\"No\">No</option>
+            <option value=\"Yes\">Yes</option>
+            <option value=\"Prefer not to say\">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <div class=\"row\">
+        <button id=\"startButton\">Begin Practice</button>
+      </div>
+    </div>
+  </div>
+
+  <div id=\"taskScreen\" class=\"screen\">
+    <div class=\"card task-card\">
+      <div id=\"trialCounter\"></div>
+      <div id=\"statusText\"></div>
+      <div id=\"warningCue\"></div>
+      <div id=\"cueExplanation\"></div>
+      <div id=\"fixation\"></div>
+
+      <div id=\"contextStage\" class=\"hidden\">
+        <div id=\"pictureStimulus\"></div>
+        <div id=\"wordStimulus\"></div>
+      </div>
+
+      <div id=\"testStage\"></div>
+
+      <div class=\"responseButtons\">
+        <button id=\"relatedBtn\">Related (F)</button>
+        <button id=\"unrelatedBtn\" class=\"secondary\">Unrelated (J)</button>
+      </div>
+
+      <div id=\"feedbackText\"></div>
+      <div class=\"center-note\">Answer based only on the part you were told to focus on.</div>
+    </div>
+  </div>
+
+  <div id=\"endScreen\" class=\"screen\">
+    <div class=\"card end-card\">
+      <h2>Thank you</h2>
+      <p>The task is complete.</p>
+
+      <div class=\"summary-grid\">
+        <div class=\"summary-box\">
+          <div class=\"label\">Overall accuracy</div>
+          <div id=\"overallAccuracy\" class=\"value\">0%</div>
+        </div>
+        <div class=\"summary-box\">
+          <div class=\"label\">Mean reaction time</div>
+          <div id=\"overallRT\" class=\"value\">0 ms</div>
+        </div>
+        <div class=\"summary-box\">
+          <div class=\"label\">Interference score</div>
+          <div id=\"interferenceScore\" class=\"value\">0 ms</div>
+        </div>
+      </div>
+
+      <div class=\"chart-wrap\">
+        <canvas id=\"resultsChart\" width=\"760\" height=\"360\"></canvas>
+      </div>
+
+      <div class=\"row\" style=\"justify-content:center; margin-top:22px;\">
+        <button id=\"downloadCsvBtn\">Download Performance CSV</button>
+        <button id=\"restartBtn\" class=\"secondary\">Restart</button>
+      </div>
+
+      <div id=\"saveStatus\"></div>
+    </div>
+  </div>
+
+  <form id=\"sheetForm\" method=\"POST\" target=\"sheetFrame\" style=\"display:none;\">
+    <input type=\"hidden\" name=\"payload\" id=\"payloadInput\" />
+  </form>
+  <iframe name=\"sheetFrame\" id=\"sheetFrame\" style=\"display:none;\"></iframe>
+
+  <script src=\"https://cdn.jsdelivr.net/npm/chart.js\"></script>
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxknoAhPC31siAKQMtCNZLgpZkY_gUh1p__mSQgggWZx8vK0EFCZw5P6MCB-tO5lbE2/exec";
+
+    const TIMING = {
+      cueMs: 1000,
+      blankAfterCueMs: 1000,
+      contextMs: 1200,
+      soaMs: 50,
+      maxResponseMs: 3500,
+      practiceFeedbackMs: 900,
+      interTrialMs: 500,
+      transitionMs: 1800
+    };
+
+    const conceptGroups = [
+      [{name:"rain",emoji:"🌧️",group:"weather"},{name:"umbrella",emoji:"☂️",group:"weather"},{name:"cloud",emoji:"☁️",group:"weather"}],
+      [{name:"key",emoji:"🔑",group:"lock"},{name:"lock",emoji:"🔒",group:"lock"},{name:"door",emoji:"🚪",group:"lock"}],
+      [{name:"dog",emoji:"🐶",group:"dog"},{name:"bone",emoji:"🦴",group:"dog"},{name:"leash",emoji:"🦮",group:"dog"}],
+      [{name:"bee",emoji:"🐝",group:"bee"},{name:"flower",emoji:"🌸",group:"bee"},{name:"hive",emoji:"🍯",group:"bee"}],
+      [{name:"book",emoji:"📖",group:"school"},{name:"school",emoji:"🏫",group:"school"},{name:"pencil",emoji:"✏️",group:"school"}],
+      [{name:"doctor",emoji:"🧑‍⚕️",group:"hospital"},{name:"hospital",emoji:"🏥",group:"hospital"},{name:"ambulance",emoji:"🚑",group:"hospital"}],
+      [{name:"fire",emoji:"🔥",group:"fire"},{name:"smoke",emoji:"💨",group:"fire"},{name:"extinguisher",emoji:"🧯",group:"fire"}],
+      [{name:"bird",emoji:"🐦",group:"bird"},{name:"nest",emoji:"🪹",group:"bird"},{name:"egg",emoji:"🥚",group:"bird"}],
+      [{name:"tooth",emoji:"🦷",group:"tooth"},{name:"toothbrush",emoji:"🪥",group:"tooth"},{name:"toothpaste",emoji:"🧴",group:"tooth"}],
+      [{name:"apple",emoji:"🍎",group:"apple"},{name:"tree",emoji:"🌳",group:"apple"},{name:"leaf",emoji:"🍃",group:"apple"}]
+    ];
+    const allConcepts = conceptGroups.flat();
+
+    const practiceConditions = [
+      {attendMode:"P",trialType:"filler"},
+      {attendMode:"P",trialType:"experimental"},
+      {attendMode:"P",trialType:"comparison"},
+      {attendMode:"W",trialType:"filler"},
+      {attendMode:"W",trialType:"experimental"},
+      {attendMode:"W",trialType:"comparison"}
+    ];
+
+    const mainConditions = [
+      {attendMode:"P",trialType:"filler"},{attendMode:"P",trialType:"filler"},
+      {attendMode:"P",trialType:"filler"},{attendMode:"P",trialType:"filler"},
+      {attendMode:"W",trialType:"filler"},{attendMode:"W",trialType:"filler"},
+      {attendMode:"W",trialType:"filler"},
+      {attendMode:"P",trialType:"experimental"},{attendMode:"P",trialType:"experimental"},
+      {attendMode:"W",trialType:"experimental"},{attendMode:"W",trialType:"experimental"},
+      {attendMode:"P",trialType:"comparison"},{attendMode:"P",trialType:"comparison"},
+      {attendMode:"W",trialType:"comparison"},{attendMode:"W",trialType:"comparison"}
+    ];
+
+    let participantId = "", adhdStatus = "No", allTrials = [], currentTrials = [], currentPhase = "practice";
+    let trialPointer = 0, activeTrial = null, responseStartTime = null, waitingForResponse = false;
+    let taskRunning = false, responseTimer = null, resultsChart = null;
+
+    const welcomeScreen = document.getElementById("welcomeScreen");
+    const taskScreen = document.getElementById("taskScreen");
+    const endScreen = document.getElementById("endScreen");
+    const trialCounter = document.getElementById("trialCounter");
+    const statusText = document.getElementById("statusText");
+    const warningCue = document.getElementById("warningCue");
+    const cueExplanation = document.getElementById("cueExplanation");
+    const fixation = document.getElementById("fixation");
+    const contextStage = document.getElementById("contextStage");
+    const pictureStimulus = document.getElementById("pictureStimulus");
+    const wordStimulus = document.getElementById("wordStimulus");
+    const testStage = document.getElementById("testStage");
+    const feedbackText = document.getElementById("feedbackText");
+    const saveStatus = document.getElementById("saveStatus");
+
+    function showScreen(el){[welcomeScreen,taskScreen,endScreen].forEach(x=>x.classList.remove("active"));el.classList.add("active")}
+    function sleep(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+    function shuffle(arr){const copy=[...arr];for(let i=copy.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[copy[i],copy[j]]=[copy[j],copy[i]]}return copy}
+    function randomChoice(arr){return arr[Math.floor(Math.random()*arr.length)]}
+    function generateRandomId(length=8){const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let out="";for(let i=0;i<length;i++){out+=chars[Math.floor(Math.random()*chars.length)]}return out}
+    function getGroupItems(groupName){return conceptGroups.find(group=>group[0].group===groupName)}
+    function getOtherItemFromSameGroup(item, excludedNames=[]){const groupItems=getGroupItems(item.group).filter(x=>x.name!==item.name&&!excludedNames.includes(x.name));return randomChoice(groupItems)}
+    function getUnrelatedItem(excludedGroups=[], excludedNames=[]){const candidates=allConcepts.filter(x=>!excludedGroups.includes(x.group)&&!excludedNames.includes(x.name));return randomChoice(candidates)}
+
+    function buildTrial(condition){
+      const pictureConcept = randomChoice(allConcepts);
+      const wordCandidates = allConcepts.filter(x=>x.group!==pictureConcept.group);
+      const wordConcept = randomChoice(wordCandidates);
+      let testConcept, correctResponse;
+
+      if(condition.trialType==="filler"){
+        testConcept = condition.attendMode==="P"
+          ? getOtherItemFromSameGroup(pictureConcept,[wordConcept.name])
+          : getOtherItemFromSameGroup(wordConcept,[pictureConcept.name]);
+        correctResponse = "related";
+      } else if(condition.trialType==="experimental"){
+        testConcept = condition.attendMode==="P"
+          ? getOtherItemFromSameGroup(wordConcept,[pictureConcept.name])
+          : getOtherItemFromSameGroup(pictureConcept,[wordConcept.name]);
+        correctResponse = "unrelated";
+      } else {
+        testConcept = getUnrelatedItem([pictureConcept.group, wordConcept.group],[pictureConcept.name, wordConcept.name]);
+        correctResponse = "unrelated";
+      }
+
+      return {
+        phase: currentPhase,
+        attendMode: condition.attendMode,
+        trialType: condition.trialType,
+        contextPictureConcept: pictureConcept,
+        contextWordConcept: wordConcept,
+        testModality: condition.attendMode==="P" ? "picture" : "word",
+        testConcept,
+        correctResponse,
+        wordPositionClass: randomChoice(["center","upper","lower"])
+      };
+    }
+
+    function preparePhase(phaseName){
+      currentPhase = phaseName; trialPointer = 0; feedbackText.textContent = ""; feedbackText.className = "";
+      const conditionList = phaseName==="practice" ? practiceConditions : mainConditions;
+      currentTrials = shuffle(conditionList).map(cond=>buildTrial(cond));
+    }
+
+    function updateCounter(){
+      const total = currentTrials.length;
+      const shownIndex = Math.min(trialPointer + 1, total);
+      trialCounter.textContent = `${currentPhase==="practice" ? "Practice" : "Main task"}: Trial ${shownIndex} of ${total}`;
+      statusText.textContent = currentPhase==="practice" ? "Practice trials with feedback" : "Respond as accurately and quickly as you can";
+    }
+
+    function clearDisplays(){
+      warningCue.textContent = ""; cueExplanation.textContent = ""; fixation.textContent = "";
+      pictureStimulus.textContent = ""; wordStimulus.textContent = ""; testStage.innerHTML = "";
+      contextStage.classList.add("hidden");
+    }
+
+    async function showTransition(title, message){
+      clearDisplays(); feedbackText.textContent = ""; feedbackText.className = "";
+      warningCue.textContent = title; cueExplanation.textContent = message;
+      await sleep(TIMING.transitionMs); warningCue.textContent = ""; cueExplanation.textContent = "";
+    }
+
+    function placeWordOverlay(positionClass){
+      wordStimulus.style.top = "50%"; wordStimulus.style.left = "50%"; wordStimulus.style.transform = "translate(-50%, -50%)";
+      if(positionClass==="upper"){wordStimulus.style.top = "24%"}
+      else if(positionClass==="lower"){wordStimulus.style.top = "76%"}
+    }
+
+    function renderTestStimulus(trial){
+      if(trial.testModality==="picture"){testStage.innerHTML = `<div class="test-picture">${trial.testConcept.emoji}</div>`}
+      else {testStage.innerHTML = `<div class="test-word">${trial.testConcept.name.toUpperCase()}</div>`}
+    }
+
+    async function runNextTrial(){
+      if(trialPointer >= currentTrials.length){
+        if(currentPhase==="practice"){
+          preparePhase("main");
+          await showTransition("Main task", "The main task will begin now.");
+          await runNextTrial();
+          return;
+        }
+        await finishTask();
+        return;
+      }
+
+      updateCounter(); clearDisplays(); activeTrial = currentTrials[trialPointer]; waitingForResponse = false;
+      await sleep(250);
+      warningCue.textContent = activeTrial.attendMode;
+      cueExplanation.textContent = activeTrial.attendMode==="P" ? "Focus on the picture" : "Focus on the word";
+      await sleep(TIMING.cueMs);
+
+      warningCue.textContent = ""; cueExplanation.textContent = ""; fixation.textContent = "+";
+      await sleep(TIMING.blankAfterCueMs);
+
+      fixation.textContent = ""; pictureStimulus.textContent = activeTrial.contextPictureConcept.emoji;
+      wordStimulus.textContent = activeTrial.contextWordConcept.name.toUpperCase();
+      placeWordOverlay(activeTrial.wordPositionClass);
+      contextStage.classList.remove("hidden");
+      await sleep(TIMING.contextMs);
+
+      contextStage.classList.add("hidden");
+      await sleep(TIMING.soaMs);
+
+      renderTestStimulus(activeTrial);
+      responseStartTime = performance.now(); waitingForResponse = true;
+
+      responseTimer = setTimeout(() => {
+        if(waitingForResponse){handleResponse("no_response", TIMING.maxResponseMs)}
+      }, TIMING.maxResponseMs);
+    }
+
+    function appendTrialData(response, rt){
+      const accuracy = response===activeTrial.correctResponse ? 1 : 0;
+      const row = {
+        participant_id: participantId,
+        adhd_status: adhdStatus,
+        phase: currentPhase,
+        trial_index: trialPointer + 1,
+        attend_mode: activeTrial.attendMode,
+        isi_ms: TIMING.soaMs,
+        trial_type: activeTrial.trialType,
+        context_picture: activeTrial.contextPictureConcept.name,
+        context_word: activeTrial.contextWordConcept.name,
+        test_modality: activeTrial.testModality,
+        test_stimulus: activeTrial.testConcept.name,
+        correct_response: activeTrial.correctResponse,
+        participant_response: response,
+        accuracy: accuracy,
+        reaction_time_ms: Math.round(rt)
+      };
+      allTrials.push(row);
+      localStorage.setItem("latest_picture_word_task", JSON.stringify(allTrials));
+      return accuracy;
+    }
+
+    async function handleResponse(response, forcedRt=null){
+      if(!waitingForResponse || !taskRunning) return;
+      waitingForResponse = false;
+      if(responseTimer) clearTimeout(responseTimer);
+
+      const rt = forcedRt===null ? performance.now() - responseStartTime : forcedRt;
+      const accuracy = appendTrialData(response, rt);
+
+      if(currentPhase==="practice"){
+        if(response==="no_response"){feedbackText.textContent="Too slow";feedbackText.className="incorrect"}
+        else if(accuracy){feedbackText.textContent="Correct";feedbackText.className="correct"}
+        else {feedbackText.textContent="Incorrect";feedbackText.className="incorrect"}
+        await sleep(TIMING.practiceFeedbackMs);
+      } else {
+        await sleep(TIMING.interTrialMs);
+      }
+
+      feedbackText.textContent = ""; feedbackText.className = "";
+      trialPointer += 1; await runNextTrial();
+    }
+
+    function makeCsv(){
+      const headers = ["participant_id","adhd_status","phase","trial_index","attend_mode","isi_ms","trial_type","context_picture","context_word","test_modality","test_stimulus","correct_response","participant_response","accuracy","reaction_time_ms"];
+      const lines = [headers.join(",")];
+      allTrials.forEach(row => {
+        const vals = headers.map(h => {
+          const value = row[h]===undefined || row[h]===null ? "" : String(row[h]);
+          return `"${value.replaceAll('"','""')}"`;
+        });
+        lines.push(vals.join(","));
+      });
+      return lines.join("\n");
+    }
+
+    function downloadCsv(){
+      const csv = makeCsv();
+      const blob = new Blob([csv], {type:"text/csv"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `${participantId}_picture_word_task_results.csv`;
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    }
+
+    async function saveDataToGoogleSheet(){
+      const payload = JSON.stringify({rows: allTrials});
+      try{
+        const form = document.getElementById("sheetForm");
+        const input = document.getElementById("payloadInput");
+        form.action = SCRIPT_URL; input.value = payload; form.submit();
+        await sleep(1200);
+        return true;
+      } catch(error){
+        console.error("Form save failed", error);
+        return false;
+      }
+    }
+
+    function mean(values){return values.length ? values.reduce((a,b)=>a+b,0)/values.length : 0}
+    function percent(part,total){return total ? (part/total)*100 : 0}
+
+    function computeSummary(){
+      const mainTrials = allTrials.filter(t=>t.phase==="main");
+      const responded = mainTrials.filter(t=>t.participant_response!=="no_response");
+      const correct = mainTrials.filter(t=>t.accuracy===1);
+      const experimental = responded.filter(t=>t.trial_type==="experimental");
+      const comparison = responded.filter(t=>t.trial_type==="comparison");
+      const filler = responded.filter(t=>t.trial_type==="filler");
+
+      const experimentalMean = Math.round(mean(experimental.map(t=>t.reaction_time_ms)));
+      const comparisonMean = Math.round(mean(comparison.map(t=>t.reaction_time_ms)));
+      const fillerMean = Math.round(mean(filler.map(t=>t.reaction_time_ms)));
+      const overallMean = Math.round(mean(responded.map(t=>t.reaction_time_ms)));
+      const overallAccuracy = Math.round(percent(correct.length, mainTrials.length));
+      const interference = experimental.length && comparison.length ? experimentalMean - comparisonMean : 0;
+
+      return {experimentalMean, comparisonMean, fillerMean, overallMean, overallAccuracy, interference};
+    }
+
+    function renderResults(summary){
+      document.getElementById("overallAccuracy").textContent = `${summary.overallAccuracy}%`;
+      document.getElementById("overallRT").textContent = `${summary.overallMean} ms`;
+      document.getElementById("interferenceScore").textContent = `${summary.interference} ms`;
+
+      const ctx = document.getElementById("resultsChart").getContext("2d");
+      if(resultsChart) resultsChart.destroy();
+      resultsChart = new Chart(ctx, {
+        type: "bar",
+        data: {
+          labels: ["Experimental","Comparison","Filler"],
+          datasets: [{label:"Mean reaction time (ms)", data:[summary.experimentalMean, summary.comparisonMean, summary.fillerMean]}]
+        },
+        options: {
+          responsive: true,
+          plugins: {legend: {display:false}},
+          scales: {y: {beginAtZero: true, title: {display: true, text: "Milliseconds"}}}
+        }
+      });
+    }
+
+    async function finishTask(){
+      taskRunning = false; clearDisplays(); showScreen(endScreen);
+      const summary = computeSummary(); renderResults(summary);
+      saveStatus.textContent = "Saving your responses...";
+      const saved = await saveDataToGoogleSheet();
+      saveStatus.textContent = saved ? "Your responses have been sent." : "Your responses could not be sent. Please download your CSV before closing the page.";
+    }
+
+    async function startExperiment(){
+      participantId = document.getElementById("participantId").value.trim() || generateRandomId();
+      adhdStatus = document.getElementById("adhdStatus").value;
+      allTrials = []; preparePhase("practice"); showScreen(taskScreen); taskRunning = true;
+      await showTransition("Practice", "You will begin with a few practice trials.");
+      runNextTrial();
+    }
+
+    document.getElementById("startButton").addEventListener("click", startExperiment);
+    document.getElementById("relatedBtn").addEventListener("click", () => handleResponse("related"));
+    document.getElementById("unrelatedBtn").addEventListener("click", () => handleResponse("unrelated"));
+    document.getElementById("downloadCsvBtn").addEventListener("click", downloadCsv);
+    document.getElementById("restartBtn").addEventListener("click", () => location.reload());
+
+    document.addEventListener("keydown", event => {
+      const key = event.key.toLowerCase();
+      if(key==="f") handleResponse("related");
+      if(key==="j") handleResponse("unrelated");
+    });
+  </script>
+</body>
+</html>
