@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Picture-Word Stroop Task</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      margin: 0;
+      background: #f6f7fb;
+      color: #1f2937;
+    }
+    .screen {
+      display: none;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .screen.active {
+      display: flex;
+    }
+    .card {
+      width: 100%;
+      max-width: 900px;
+      background: white;
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+      box-sizing: border-box;
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    p, li {
+      line-height: 1.6;
+      font-size: 18px;
+    }
+    .small {
+      font-size: 15px;
+      color: #4b5563;
+    }
+    .row {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    input[type="text"], select {
+      width: 100%;
+      max-width: 360px;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 14px 18px;
+      font-size: 16px;
+      cursor: pointer;
+      background: #1f2937;
+      color: white;
+    }
+    button.secondary {
+      background: #475569;
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    #taskCard {
+      max-width: 1000px;
+      text-align: center;
+    }
+    #trialCounter, #statusText {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+    #warningCue {
+      font-size: 72px;
+      font-weight: 700;
+      margin-top: 24px;
+      margin-bottom: 12px;
+      min-height: 100px;
+    }
+    #cueExplanation {
+      font-size: 28px;
+      min-height: 38px;
+      margin-bottom: 16px;
+    }
+    #fixation {
+      font-size: 56px;
+      min-height: 70px;
+      margin-bottom: 18px;
+    }
+    #contextStage {
+      position: relative;
+      width: 420px;
+      height: 260px;
+      margin: 0 auto 18px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #e5e7eb;
+      border-radius: 16px;
+      background: #fafafa;
+    }
+    #pictureStimulus {
+      font-size: 120px;
+      line-height: 1;
+      user-select: none;
+    }
+    #wordStimulus {
+      position: absolute;
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      background: rgba(255,255,255,0.78);
+      padding: 6px 14px;
+      border-radius: 10px;
+      user-select: none;
+    }
+    #testStage {
+      min-height: 120px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .test-picture {
+      font-size: 96px;
+    }
+    .test-word {
+      font-size: 54px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    .responseButtons {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      margin-top: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .responseButtons button {
+      min-width: 170px;
+      font-size: 18px;
+    }
+    #feedbackText {
+      min-height: 30px;
+      font-size: 22px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .hidden {
+      visibility: hidden;
+    }
+    .summaryBox {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+    code.inline {
+      background: #eef2ff;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div id="welcomeScreen" class="screen active">
+    <div class="card">
+      <h1>Picture-Word Stroop Task</h1>
+      <p>
+        In this study, you will see a picture with a word placed on top of it. On each trial, a cue will tell you whether to attend to the
+        <strong>picture</strong> or the <strong>word</strong>. You should ignore the other part of the display.
+      </p>
+      <p>
+        After a short delay, you will see a single test item. Your job is to decide whether that test item is <strong>related</strong> or
+        <strong>unrelated</strong> to the part you were told to attend to.
+      </p>
+      <ul>
+        <li>Use the <strong>Related</strong> and <strong>Unrelated</strong> buttons, or press <strong>F</strong> for Related and <strong>J</strong> for Unrelated.</li>
+        <li>The task includes a short practice phase with feedback, followed by the main task without feedback.</li>
+        <li>Please do the task in a quiet place on a laptop or desktop browser if possible.</li>
+      </ul>
+
+      <div class="row">
+        <div>
+          <label for="participantId">Participant ID</label>
+          <input id="participantId" type="text" placeholder="Leave blank to auto-generate" />
+        </div>
+        <div>
+          <label for="adhdStatus">Self-reported ADHD status</label>
+          <select id="adhdStatus">
+            <option value="No">No</option>
+            <option value="Yes">Yes</option>
+            <option value="Prefer not to say">Prefer not to say</option>
+          </select>
+        </div>
+      </div>
+
+      <p class="small">
+        This browser task stores trial-by-trial responses in a Google Sheet when the script URL is connected. A backup CSV can also be downloaded at the end.
+      </p>
+
+      <div class="row">
+        <button id="startButton">Start Practice</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="taskScreen" class="screen">
+    <div id="taskCard" class="card">
+      <div id="trialCounter"></div>
+      <div id="statusText"></div>
+      <div id="warningCue"></div>
+      <div id="cueExplanation"></div>
+      <div id="fixation"></div>
+
+      <div id="contextStage" class="hidden">
+        <div id="pictureStimulus"></div>
+        <div id="wordStimulus"></div>
+      </div>
+
+      <div id="testStage"></div>
+
+      <div class="responseButtons">
+        <button id="relatedBtn">Related (F)</button>
+        <button id="unrelatedBtn" class="secondary">Unrelated (J)</button>
+      </div>
+      <div id="feedbackText"></div>
+
+      <p class="small">
+        Attend to the instructed part only. Respond as quickly and accurately as you can.
+      </p>
+    </div>
+  </div>
+
+  <div id="endScreen" class="screen">
+    <div class="card">
+      <h2>Task Complete</h2>
+      <p>Thank you for participating.</p>
+      <div id="summaryText" class="summaryBox"></div>
+      <div class="row">
+        <button id="downloadCsvBtn">Download Backup CSV</button>
+        <button id="restartBtn" class="secondary">Restart</button>
+      </div>
+      <p class="small">
+        Before using this live, replace <code class="inline">https://script.google.com/macros/s/AKfycbz-SADKamxTRm-SGDyze7aFtd2imoVrNzzFUYh6HyTEXb2t8X8KQERHJ-hCzim3YT1R/exec</code> in the code with your deployed Google Apps Script web app URL.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz-SADKamxTRm-SGDyze7aFtd2imoVrNzzFUYh6HyTEXb2t8X8KQERHJ-hCzim3YT1R/exec";
+
+    const concepts = [
+      { name: "rain", emoji: "🌧️", group: "rain_umbrella" },
+      { name: "umbrella", emoji: "☂️", group: "rain_umbrella" },
+      { name: "dog", emoji: "🐶", group: "dog_bone" },
+      { name: "bone", emoji: "🦴", group: "dog_bone" },
+      { name: "bee", emoji: "🐝", group: "bee_flower" },
+      { name: "flower", emoji: "🌸", group: "bee_flower" },
+      { name: "key", emoji: "🔑", group: "key_lock" },
+      { name: "lock", emoji: "🔒", group: "key_lock" },
+      { name: "book", emoji: "📖", group: "book_school" },
+      { name: "school", emoji: "🏫", group: "book_school" },
+      { name: "apple", emoji: "🍎", group: "apple_tree" },
+      { name: "tree", emoji: "🌳", group: "apple_tree" }
+    ];
+
+    const practiceConditions = [
+      { attendMode: "P", isiMs: 50, trialType: "filler" },
+      { attendMode: "P", isiMs: 50, trialType: "experimental" },
+      { attendMode: "P", isiMs: 1000, trialType: "comparison" },
+      { attendMode: "W", isiMs: 50, trialType: "filler" },
+      { attendMode: "W", isiMs: 50, trialType: "experimental" },
+      { attendMode: "W", isiMs: 1000, trialType: "comparison" }
+    ];
+
+    const mainConditions = [];
+    ["P", "W"].forEach(attendMode => {
+      [50, 1000].forEach(isiMs => {
+        ["experimental", "comparison", "filler"].forEach(trialType => {
+          for (let i = 0; i < 6; i++) {
+            mainConditions.push({ attendMode, isiMs, trialType });
+          }
+        });
+      });
+    });
+
+    let participantId = "";
+    let adhdStatus = "No";
+    let allTrials = [];
+    let currentTrials = [];
+    let currentPhase = "practice";
+    let trialPointer = 0;
+    let activeTrial = null;
+    let responseStartTime = null;
+    let waitingForResponse = false;
+    let taskRunning = false;
+
+    const welcomeScreen = document.getElementById("welcomeScreen");
+    const taskScreen = document.getElementById("taskScreen");
+    const endScreen = document.getElementById("endScreen");
+
+    const trialCounter = document.getElementById("trialCounter");
+    const statusText = document.getElementById("statusText");
+    const warningCue = document.getElementById("warningCue");
+    const cueExplanation = document.getElementById("cueExplanation");
+    const fixation = document.getElementById("fixation");
+    const contextStage = document.getElementById("contextStage");
+    const pictureStimulus = document.getElementById("pictureStimulus");
+    const wordStimulus = document.getElementById("wordStimulus");
+    const testStage = document.getElementById("testStage");
+    const feedbackText = document.getElementById("feedbackText");
+
+    const relatedBtn = document.getElementById("relatedBtn");
+    const unrelatedBtn = document.getElementById("unrelatedBtn");
+
+    function showScreen(screenEl) {
+      [welcomeScreen, taskScreen, endScreen].forEach(el => el.classList.remove("active"));
+      screenEl.classList.add("active");
+    }
+
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function shuffle(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function generateRandomId(length = 8) {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let out = "";
+      for (let i = 0; i < length; i++) {
+        out += chars[Math.floor(Math.random() * chars.length)];
+      }
+      return out;
+    }
+
+    function pairedConcept(concept) {
+      return concepts.find(c => c.group === concept.group && c.name !== concept.name);
+    }
+
+    function randomChoice(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function buildTrial(condition) {
+      const picConcept = randomChoice(concepts);
+      const wordChoices = concepts.filter(c => c.group !== picConcept.group);
+      const wordConcept = randomChoice(wordChoices);
+
+      let testConcept;
+      let correctResponse;
+
+      if (condition.trialType === "experimental") {
+        if (condition.attendMode === "P") {
+          testConcept = pairedConcept(wordConcept);
+        } else {
+          testConcept = pairedConcept(picConcept);
+        }
+        correctResponse = "unrelated";
+      } else if (condition.trialType === "comparison") {
+        const comparisonChoices = concepts.filter(c => c.group !== picConcept.group && c.group !== wordConcept.group);
+        testConcept = randomChoice(comparisonChoices);
+        correctResponse = "unrelated";
+      } else {
+        if (condition.attendMode === "P") {
+          testConcept = pairedConcept(picConcept);
+        } else {
+          testConcept = pairedConcept(wordConcept);
+        }
+        correctResponse = "related";
+      }
+
+      return {
+        phase: currentPhase,
+        attendMode: condition.attendMode,
+        isiMs: condition.isiMs,
+        trialType: condition.trialType,
+        contextPictureConcept: picConcept,
+        contextWordConcept: wordConcept,
+        testModality: condition.attendMode === "P" ? "picture" : "word",
+        testConcept,
+        correctResponse
+      };
+    }
+
+    function preparePhase(phaseName) {
+      currentPhase = phaseName;
+      trialPointer = 0;
+      feedbackText.textContent = "";
+      const conditionList = phaseName === "practice" ? practiceConditions : mainConditions;
+      currentTrials = shuffle(conditionList).map(cond => buildTrial(cond));
+    }
+
+    function updateCounter() {
+      const total = currentTrials.length;
+      const shownIndex = Math.min(trialPointer + 1, total);
+      trialCounter.textContent = `${currentPhase === "practice" ? "Practice" : "Main task"} trial ${shownIndex} of ${total}`;
+      statusText.textContent = currentPhase === "practice"
+        ? "Practice phase. Feedback will appear after each response."
+        : "Main task. No feedback will be shown.";
+    }
+
+    function clearDisplays() {
+      warningCue.textContent = "";
+      cueExplanation.textContent = "";
+      fixation.textContent = "";
+      pictureStimulus.textContent = "";
+      wordStimulus.textContent = "";
+      testStage.innerHTML = "";
+      contextStage.classList.add("hidden");
+    }
+
+    async function runNextTrial() {
+      if (trialPointer >= currentTrials.length) {
+        if (currentPhase === "practice") {
+          preparePhase("main");
+          await showPhaseTransition(
+            "Practice complete",
+            "The main task will start now. Respond as quickly and accurately as you can."
+          );
+          await runNextTrial();
+          return;
+        }
+        finishTask();
+        return;
+      }
+
+      updateCounter();
+      clearDisplays();
+      activeTrial = currentTrials[trialPointer];
+      waitingForResponse = false;
+
+      await sleep(400);
+
+      warningCue.textContent = activeTrial.attendMode;
+      cueExplanation.textContent = activeTrial.attendMode === "P"
+        ? "Attend to the picture"
+        : "Attend to the word";
+      await sleep(1000);
+
+      warningCue.textContent = "";
+      cueExplanation.textContent = "";
+      fixation.textContent = "+";
+      await sleep(1000);
+
+      fixation.textContent = "";
+      pictureStimulus.textContent = activeTrial.contextPictureConcept.emoji;
+      wordStimulus.textContent = activeTrial.contextWordConcept.name.toUpperCase();
+      contextStage.classList.remove("hidden");
+      await sleep(700);
+
+      contextStage.classList.add("hidden");
+      await sleep(activeTrial.isiMs);
+
+      if (activeTrial.testModality === "picture") {
+        testStage.innerHTML = `<div class="test-picture">${activeTrial.testConcept.emoji}</div>`;
+      } else {
+        testStage.innerHTML = `<div class="test-word">${activeTrial.testConcept.name.toUpperCase()}</div>`;
+      }
+
+      responseStartTime = performance.now();
+      waitingForResponse = true;
+
+      setTimeout(() => {
+        if (waitingForResponse) {
+          handleResponse("no_response", 2000);
+        }
+      }, 2000);
+    }
+
+    async function showPhaseTransition(title, message) {
+      clearDisplays();
+      warningCue.textContent = title;
+      cueExplanation.textContent = message;
+      await sleep(1800);
+      warningCue.textContent = "";
+      cueExplanation.textContent = "";
+    }
+
+    function appendTrialData(response, rt) {
+      const accuracy = response === activeTrial.correctResponse ? 1 : 0;
+      const row = {
+        participant_id: participantId,
+        adhd_status: adhdStatus,
+        phase: currentPhase,
+        trial_index: trialPointer + 1,
+        attend_mode: activeTrial.attendMode,
+        isi_ms: activeTrial.isiMs,
+        trial_type: activeTrial.trialType,
+        context_picture: activeTrial.contextPictureConcept.name,
+        context_word: activeTrial.contextWordConcept.name,
+        test_modality: activeTrial.testModality,
+        test_stimulus: activeTrial.testConcept.name,
+        correct_response: activeTrial.correctResponse,
+        participant_response: response,
+        accuracy: accuracy,
+        reaction_time_ms: Math.round(rt)
+      };
+      allTrials.push(row);
+      return accuracy;
+    }
+
+    async function handleResponse(response, forcedRt = null) {
+      if (!waitingForResponse || !taskRunning) return;
+
+      waitingForResponse = false;
+      const rt = forcedRt === null ? performance.now() - responseStartTime : forcedRt;
+      const accuracy = appendTrialData(response, rt);
+
+      if (currentPhase === "practice") {
+        if (response === "no_response") {
+          feedbackText.textContent = "Too slow";
+        } else {
+          feedbackText.textContent = accuracy ? "Correct" : "Incorrect";
+        }
+      } else {
+        feedbackText.textContent = "";
+      }
+
+      trialPointer += 1;
+      await sleep(currentPhase === "practice" ? 700 : 300);
+      feedbackText.textContent = "";
+      await runNextTrial();
+    }
+
+    async function saveDataToGoogleSheet() {
+      if (!SCRIPT_URL || SCRIPT_URL.includes("https://script.google.com/macros/s/AKfycbz-SADKamxTRm-SGDyze7aFtd2imoVrNzzFUYh6HyTEXb2t8X8KQERHJ-hCzim3YT1R/exec")) {
+        return { attempted: false, message: "Google Apps Script URL has not been added yet." };
+      }
+
+      try {
+        await fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: {
+            "Content-Type": "text/plain;charset=utf-8"
+          },
+          body: JSON.stringify({ rows: allTrials })
+        });
+        return { attempted: true, message: "Data submission was attempted." };
+      } catch (error) {
+        return { attempted: false, message: `Data submission failed: ${error.message}` };
+      }
+    }
+
+    function makeCsv() {
+      const headers = [
+        "participant_id", "adhd_status", "phase", "trial_index", "attend_mode", "isi_ms", "trial_type",
+        "context_picture", "context_word", "test_modality", "test_stimulus", "correct_response",
+        "participant_response", "accuracy", "reaction_time_ms"
+      ];
+      const lines = [headers.join(",")];
+      allTrials.forEach(row => {
+        const vals = headers.map(h => {
+          const value = row[h] === undefined || row[h] === null ? "" : String(row[h]);
+          return `"${value.replaceAll('"', '""')}"`;
+        });
+        lines.push(vals.join(","));
+      });
+      return lines.join("\n");
+    }
+
+    function downloadCsv() {
+      const csv = makeCsv();
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${participantId}_picture_word_stroop_data.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function computeSummary() {
+      const mainTrials = allTrials.filter(t => t.phase === "main");
+      const experimental = mainTrials.filter(t => t.trial_type === "experimental");
+      const comparison = mainTrials.filter(t => t.trial_type === "comparison");
+
+      const validMain = mainTrials.filter(t => t.participant_response !== "no_response");
+      const meanRt = validMain.length
+        ? Math.round(validMain.reduce((sum, t) => sum + t.reaction_time_ms, 0) / validMain.length)
+        : "NA";
+
+      const accuracy = mainTrials.length
+        ? ((mainTrials.reduce((sum, t) => sum + t.accuracy, 0) / mainTrials.length) * 100).toFixed(1)
+        : "NA";
+
+      function mean(list) {
+        const valid = list.filter(t => t.participant_response !== "no_response");
+        if (!valid.length) return "NA";
+        return Math.round(valid.reduce((sum, t) => sum + t.reaction_time_ms, 0) / valid.length);
+      }
+
+      const expMean = mean(experimental);
+      const compMean = mean(comparison);
+      const interference = (typeof expMean === "number" && typeof compMean === "number")
+        ? expMean - compMean
+        : "NA";
+
+      return { meanRt, accuracy, expMean, compMean, interference };
+    }
+
+    async function finishTask() {
+      taskRunning = false;
+      clearDisplays();
+      const saveStatus = await saveDataToGoogleSheet();
+      const summary = computeSummary();
+      document.getElementById("summaryText").innerHTML = `
+        <p><strong>Participant ID:</strong> ${participantId}</p>
+        <p><strong>Main-task accuracy:</strong> ${summary.accuracy}%</p>
+        <p><strong>Mean main-task RT:</strong> ${summary.meanRt} ms</p>
+        <p><strong>Experimental trial mean RT:</strong> ${summary.expMean} ms</p>
+        <p><strong>Comparison trial mean RT:</strong> ${summary.compMean} ms</p>
+        <p><strong>Interference score:</strong> ${summary.interference} ms (experimental minus comparison)</p>
+        <p><strong>Data save status:</strong> ${saveStatus.message}</p>
+      `;
+      showScreen(endScreen);
+    }
+
+    async function startExperiment() {
+      participantId = document.getElementById("participantId").value.trim() || generateRandomId();
+      adhdStatus = document.getElementById("adhdStatus").value;
+      allTrials = [];
+      preparePhase("practice");
+      showScreen(taskScreen);
+      taskRunning = true;
+      await showPhaseTransition(
+        "Practice",
+        "Remember: P means attend to the picture. W means attend to the word."
+      );
+      runNextTrial();
+    }
+
+    relatedBtn.addEventListener("click", () => handleResponse("related"));
+    unrelatedBtn.addEventListener("click", () => handleResponse("unrelated"));
+
+    document.getElementById("startButton").addEventListener("click", startExperiment);
+    document.getElementById("downloadCsvBtn").addEventListener("click", downloadCsv);
+    document.getElementById("restartBtn").addEventListener("click", () => {
+      location.reload();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      const key = event.key.toLowerCase();
+      if (key === "f") handleResponse("related");
+      if (key === "j") handleResponse("unrelated");
+    });
+  </script>
+</body>
+</html>
